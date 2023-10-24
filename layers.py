@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from torchvision import transforms
 from torchsummary import summary
@@ -45,7 +46,10 @@ class FirstConvBlock(nn.Module):
 
 
 class MobileNet(nn.Module):
-    def __init__(self, width_multiplier: Union[int, float] = 1, resolution_multiplier: Union[int, float] = 1, is_mobile: bool = True):
+    def __init__(self, width_multiplier: Union[int, float] = 1,
+                 resolution_multiplier: Union[int, float] = 1,
+                 is_mobile: bool = True,
+                 num_classes: int = 1000):
         super(MobileNet, self).__init__()
         self.resolution_multiplier = resolution_multiplier
 
@@ -65,8 +69,8 @@ class MobileNet(nn.Module):
 
         # the last layer is written to have stride 2, but given the fact the shape doesn't shrink, I've put it 1
         self.dp_layer_14 = base_conv(in_channels=self.dp_layer_13.out_channels, out_channels=self.dp_layer_13.out_channels, stride=1, kernel_size=kernel_size)
-        self.ga = nn.AvgPool2d(kernel_size=7)
-        self.fc = nn.Linear(in_features=1024, out_features=1000)
+        self.ga = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(in_features=self.dp_layer_14.out_channels, out_features=num_classes)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x):
@@ -85,7 +89,8 @@ class MobileNet(nn.Module):
         x = self.dp_layer_13(x)
         x = self.dp_layer_14(x)
         x = self.ga(x)
-        x = x.view(-1, 1024)
+        B, C, H, W = x.size()
+        x = x.view(B, 1, -1)
         x = self.fc(x)
         x = self.softmax(x)
         return x
@@ -95,3 +100,6 @@ if __name__ == "__main__":
 
     model = MobileNet()
     summary(model, (3, 224, 224))
+    inp = torch.randn(100, 3, 224, 224)
+    output = model(inp)
+    print(output.size())
