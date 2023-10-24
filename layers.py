@@ -30,11 +30,20 @@ class DepthwiseSeparableConvolution(nn.Module):
         return x
 
 
-class FirstConvBlock(nn.Module):
-    def __init__(self, width_multiplier):
-        super(FirstConvBlock, self).__init__()
-        self.out_channels = int(32 * width_multiplier)
-        self.conv = nn.Conv2d(in_channels=3, out_channels=self.out_channels, padding=1, kernel_size=3, stride=2)
+class ConvBlock(nn.Module):
+    def __init__(self, width_multiplier=None, in_channels=3, out_channels=32, kernel_size=3, stride=2):
+        super(ConvBlock, self).__init__()
+        if width_multiplier:
+            self.out_channels = int(32 * width_multiplier)
+        else:
+            self.out_channels = out_channels
+        self.stride = stride
+        self.kernel_size = kernel_size
+        self.conv = nn.Conv2d(in_channels=in_channels,
+                              out_channels=self.out_channels,
+                              padding=1,
+                              kernel_size=self.kernel_size,
+                              stride=self.stride)
         self.bn = nn.BatchNorm2d(self.out_channels)
         self.relu = nn.ReLU()
 
@@ -53,9 +62,9 @@ class MobileNet(nn.Module):
         super(MobileNet, self).__init__()
         self.resolution_multiplier = resolution_multiplier
 
-        base_conv = DepthwiseSeparableConvolution if is_mobile else nn.Conv2d
+        base_conv = DepthwiseSeparableConvolution if is_mobile else ConvBlock
         kernel_size = 3
-        self.conv_01 = FirstConvBlock(width_multiplier=width_multiplier)
+        self.conv_01 = ConvBlock(width_multiplier)
         self.dp_layer_02 = base_conv(in_channels=self.conv_01.out_channels, out_channels=self.conv_01.out_channels * 2, stride=1, kernel_size=kernel_size)
         self.dp_layer_03 = base_conv(in_channels=self.dp_layer_02.out_channels, out_channels=self.dp_layer_02.out_channels * 2, stride=2, kernel_size=kernel_size)
         self.dp_layer_04 = base_conv(in_channels=self.dp_layer_03.out_channels, out_channels=self.dp_layer_03.out_channels, stride=1, kernel_size=kernel_size)
@@ -71,7 +80,6 @@ class MobileNet(nn.Module):
         self.dp_layer_14 = base_conv(in_channels=self.dp_layer_13.out_channels, out_channels=self.dp_layer_13.out_channels, stride=1, kernel_size=kernel_size)
         self.ga = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(in_features=self.dp_layer_14.out_channels, out_features=num_classes)
-        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x):
         if self.resolution_multiplier != 1:
@@ -90,15 +98,14 @@ class MobileNet(nn.Module):
         x = self.dp_layer_14(x)
         x = self.ga(x)
         B, C, H, W = x.size()
-        x = x.view(B, 1, -1)
+        x = x.view(B, -1)
         x = self.fc(x)
-        x = self.softmax(x)
         return x
 
 
 if __name__ == "__main__":
 
-    model = MobileNet(resolution_multiplier=1, width_multiplier=1)
+    model = MobileNet(is_mobile=True)
     summary(model, (3, 224, 224))
     inp = torch.randn(100, 3, 224, 224)
     output = model(inp)
