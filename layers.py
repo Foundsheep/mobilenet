@@ -75,7 +75,7 @@ class MobileNet(nn.Module):
 
     def forward(self, x):
         if self.resolution_multiplier != 1:
-            C, H, W = x.size()
+            B, C, H, W = x.size()
             x = transforms.Resize(int(H*self.resolution_multiplier))(x)
         x = self.conv_01(x)
         x = self.dp_layer_02(x)
@@ -98,7 +98,7 @@ class MobileNet(nn.Module):
 
 if __name__ == "__main__":
 
-    model = MobileNet()
+    model = MobileNet(resolution_multiplier=1, width_multiplier=1)
     summary(model, (3, 224, 224))
     inp = torch.randn(100, 3, 224, 224)
     output = model(inp)
