@@ -83,7 +83,7 @@ def train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn):
 
 
 def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
-    history = {"accuracy": []}
+    history = {"accuracy_m": [], "accuracy_c": []}
     mobilenet.eval()
     mobilenet_cnn.eval()
     size = len(dataloader_test.dataset)
@@ -106,11 +106,11 @@ def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
             correct_c += (pred_c.argmax(1) == y).type(torch.float).sum().item()
 
     print(f"=========================="
-          f"--- test_loss_m : {test_loss_m/size:>5f}"
-          f"--- test_loss_c : {test_loss_c/size:>5f}"
-          f"--- correct_m : {correct_m:>5f}"
-          f"--- correct_c : {correct_c:>5f}"
-          f"--- accuracy_m : {correct_m / num_batches}"
+          f"--- test_loss_m : {test_loss_m/size:>5f}\n"
+          f"--- test_loss_c : {test_loss_c/size:>5f}\n"
+          f"--- correct_m : {correct_m:>5f}\n"
+          f"--- correct_c : {correct_c:>5f}\n"
+          f"--- accuracy_m : {correct_m / num_batches}\n"
           f"--- accuracy_c : {correct_c / num_batches}")
 
     history["accuracy_m"].append(correct_m / num_batches)
