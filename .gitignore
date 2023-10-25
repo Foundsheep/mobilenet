@@ -3,3 +3,4 @@
 /venv
 /MNIST
 __pycache__
+cifar-10*
