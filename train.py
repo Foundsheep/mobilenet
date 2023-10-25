@@ -97,7 +97,12 @@ def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
             X.to(DEVICE)
             y.to(DEVICE)
 
-            pred_m = mobilenet(X)
+            try:
+                pred_m = mobilenet(X)
+            except:
+                X.cuda()
+                Y.cuda()
+                pred_m = mobilenet(X)
             test_loss_m += loss_fn(pred_m, y).item()
             correct_m += (pred_m.argmax(1) == y).type(torch.float).sum().item()
 
@@ -119,6 +124,7 @@ def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
 
 
 def run():
+    print(f"DEVICE : {DEVICE}")
     dp = DataProvider()
     train_dataset, test_dataset = dp.load_cifar10()
     dataloader_train = DataLoader(train_dataset, batch_size=BATCH_SIZE)
