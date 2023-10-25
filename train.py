@@ -50,7 +50,7 @@ def train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn):
             pred_m = mobilenet(X)
         except:
             X.cuda()
-            Y.cuda()
+            y.cuda()
             pred_m = mobilenet(X)
         loss_m = loss_fn(pred_m, y)
         loss_m.backward()
@@ -106,7 +106,7 @@ def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
                 pred_m = mobilenet(X)
             except:
                 X.cuda()
-                Y.cuda()
+                y.cuda()
                 pred_m = mobilenet(X)
             test_loss_m += loss_fn(pred_m, y).item()
             correct_m += (pred_m.argmax(1) == y).type(torch.float).sum().item()
