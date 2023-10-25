@@ -1,6 +1,6 @@
 import torch
 
-ROOT = ""
+ROOT = "./"
 LEARNING_RATE = 1e-3
 BATCH_SIZE = 32
 EPOCHS = 10

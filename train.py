@@ -1,9 +1,11 @@
 import torch
 from torch import nn, optim
-from torchvision.datasets import ImageNet, MNIST
+from torchvision.datasets import CIFAR10
 from torchvision.transforms import v2, ToTensor
 from torch.utils.data import DataLoader
+
 from layers import MobileNet
+from config import *
 
 from datetime import datetime
 from time import time
@@ -11,61 +13,21 @@ from matplotlib import pyplot as plt
 from matplotlib.pylab import rcParams
 
 
-class Trainer:
-    def __init__(self, width_multiplier, resolution_multiplier):
-        self.mobilenet = MobileNet(width_multiplier, resolution_multiplier)
-        self.cnn = MobileNet(width_multiplier, resolution_multiplier, False)
-
-    def train(self):
-        pass
-
-    def save_model(self):
-        pass
-
-    def plot_history(self):
-        pass
-
-
-class DataHandler:
-    def __init__(self, root):
-        self.root = root
+class DataProvider:
+    def __init__(self):
+        self.root = ROOT
         self.transform = v2.Compose([
+            ToTensor(),
             v2.RandomHorizontalFlip(p=0.5),
         ])
 
-    def load_imagenet(self):
-        ds_train = ImageNet(root=self.root, split="train")
-        ds_val = ImageNet(root=self.root, split="val")
-        return ds_train, ds_val
+    def load_cifar10(self):
+        train_dataset = CIFAR10(root=self.root, train=True, download=True, transform=self.transform)
+        test_dataset = CIFAR10(root=self.root, train=False, download=True, transform=self.transform)
+        return train_dataset, test_dataset
 
 
-ROOT = ""
-learning_rate = 1e-3
-batch_size = 32
-epochs = 10
-width_multiplier = 1
-resolution_multiplier = 1
-
-mobilenet = MobileNet(width_multiplier, resolution_multiplier)
-mobilenet_cnn = MobileNet(width_multiplier, resolution_multiplier, False)
-# data_train = ImageNet(root=ROOT, split="train", transform=ToTensor())
-# data_val = ImageNet(root=ROOT, split="val", transform=ToTensor())
-
-transforms = v2.Compose([
-    ToTensor(),
-    v2.Lambda(lambda x: torch.cat([x] * 3, 0))
-])
-data_train = MNIST(root="./", download=True, train=True, transform=transforms)
-data_val = MNIST(root="./", download=True, train=False, transform=transforms)
-dataloader_train = DataLoader(data_train, batch_size=batch_size)
-dataloader_val = DataLoader(data_val, batch_size=batch_size)
-
-loss_fn = nn.CrossEntropyLoss()  # probably needs to set something like 'logits=True'
-adam_m = optim.Adam(mobilenet.parameters(), lr=learning_rate)
-adam_c = optim.Adam(mobilenet_cnn.parameters(), lr=learning_rate)
-
-
-def train_loop():
+def train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn):
     history = {"loss_m": [],
                "loss_c": [],
                "time_m": [],
@@ -74,6 +36,8 @@ def train_loop():
     num_batches = len(dataloader_train)
     time_m = 0
     time_c = 0
+    adam_m = optim.Adam(mobilenet.parameters(), lr=LEARNING_RATE)
+    adam_c = optim.Adam(mobilenet_cnn.parameters(), lr=LEARNING_RATE)
 
     mobilenet.train()
     mobilenet_cnn.train()
@@ -115,18 +79,18 @@ def train_loop():
     return history
 
 
-def test_loop():
+def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
     history = {"accuracy": []}
     mobilenet.eval()
     mobilenet_cnn.eval()
-    size = len(dataloader_val.dataset)
-    num_batches = len(dataloader_val)
+    size = len(dataloader_test.dataset)
+    num_batches = len(dataloader_test)
     test_loss_m = 0
     test_loss_c = 0
     correct_m = 0
     correct_c = 0
     with torch.no_grad():
-        for X, y in dataloader_val:
+        for X, y in dataloader_test:
             pred_m = mobilenet(X)
             test_loss_m += loss_fn(pred_m, y).item()
             correct_m += (pred_m.argmax(1) == y).type(torch.float).sum().item()
@@ -149,16 +113,32 @@ def test_loop():
 
 
 def run():
+    dp = DataProvider()
+    train_dataset, test_dataset = dp.load_cifar10()
+    train_dataset.data.to(DEVICE)
+    train_dataset.targets.to(DEVICE)
+    test_dataset.data.to(DEVICE)
+    test_dataset.targets.to(DEVICE)
+    dataloader_train = DataLoader(train_dataset, batch_size=BATCH_SIZE)
+    dataloader_test = DataLoader(test_dataset, batch_size=BATCH_SIZE)
+
+    loss_fn = nn.CrossEntropyLoss()
+
+    mobilenet = MobileNet(WIDTH_MULTIPLIER, RESOLUTION_MULTIPLIER, is_mobile=True, num_classes=len(train_dataset.classes))
+    mobilenet.to(DEVICE)
+    mobilenet_cnn = MobileNet(WIDTH_MULTIPLIER, RESOLUTION_MULTIPLIER, is_mobile=False, num_classes=len(train_dataset.classes))
+    mobilenet_cnn.to(DEVICE)
+
     total_history = {"loss_m": [],
                      "loss_c": [],
                      "time_m": [],
                      "time_c": [],
                      "accuracy_m": [],
                      "accuracy_c": []}
-    for epoch in epochs:
+    for epoch in range(epochs):
         print(f"Epoch {epoch+1}\n")
-        history_train = train_loop()
-        history_test = test_loop()
+        history_train = train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn)
+        history_test = test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn)
         total_history["loss_m"].extend(history_train["loss_m"])
         total_history["loss_c"].extend(history_train["loss_c"])
         total_history["time_m"].extend(history_train["time_m"])
