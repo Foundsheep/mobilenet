@@ -46,7 +46,12 @@ def train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn):
         y.to(DEVICE)
 
         start_m = time()
-        pred_m = mobilenet(X)
+        try:
+            pred_m = mobilenet(X)
+        except:
+            X.cuda()
+            Y.cuda()
+            pred_m = mobilenet(X)
         loss_m = loss_fn(pred_m, y)
         loss_m.backward()
         adam_m.step()
