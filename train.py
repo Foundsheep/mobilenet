@@ -42,16 +42,11 @@ def train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn):
     mobilenet.train()
     mobilenet_cnn.train()
     for batch_idx, (X, y) in enumerate(dataloader_train):
-        X.to(DEVICE)
-        y.to(DEVICE)
+        X = X.to(DEVICE)
+        y = y.to(DEVICE)
 
         start_m = time()
-        try:
-            pred_m = mobilenet(X)
-        except:
-            X.cuda()
-            y.cuda()
-            pred_m = mobilenet(X)
+        pred_m = mobilenet(X)
         loss_m = loss_fn(pred_m, y)
         loss_m.backward()
         adam_m.step()
@@ -99,15 +94,10 @@ def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
     correct_c = 0
     with torch.no_grad():
         for X, y in dataloader_test:
-            X.to(DEVICE)
-            y.to(DEVICE)
+            X = X.to(DEVICE)
+            y = y.to(DEVICE)
 
-            try:
-                pred_m = mobilenet(X)
-            except:
-                X.cuda()
-                y.cuda()
-                pred_m = mobilenet(X)
+            pred_m = mobilenet(X)
             test_loss_m += loss_fn(pred_m, y).item()
             correct_m += (pred_m.argmax(1) == y).type(torch.float).sum().item()
 
