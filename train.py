@@ -42,6 +42,9 @@ def train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn):
     mobilenet.train()
     mobilenet_cnn.train()
     for batch_idx, (X, y) in enumerate(dataloader_train):
+        X.to(DEVICE)
+        y.to(DEVICE)
+
         start_m = time()
         pred_m = mobilenet(X)
         loss_m = loss_fn(pred_m, y)
@@ -91,6 +94,9 @@ def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
     correct_c = 0
     with torch.no_grad():
         for X, y in dataloader_test:
+            X.to(DEVICE)
+            y.to(DEVICE)
+
             pred_m = mobilenet(X)
             test_loss_m += loss_fn(pred_m, y).item()
             correct_m += (pred_m.argmax(1) == y).type(torch.float).sum().item()
@@ -115,10 +121,6 @@ def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
 def run():
     dp = DataProvider()
     train_dataset, test_dataset = dp.load_cifar10()
-    train_dataset.data.to(DEVICE)
-    train_dataset.targets.to(DEVICE)
-    test_dataset.data.to(DEVICE)
-    test_dataset.targets.to(DEVICE)
     dataloader_train = DataLoader(train_dataset, batch_size=BATCH_SIZE)
     dataloader_test = DataLoader(test_dataset, batch_size=BATCH_SIZE)
 
@@ -135,7 +137,7 @@ def run():
                      "time_c": [],
                      "accuracy_m": [],
                      "accuracy_c": []}
-    for epoch in range(epochs):
+    for epoch in range(EPOCHS):
         print(f"Epoch {epoch+1}\n")
         history_train = train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn)
         history_test = test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn)
