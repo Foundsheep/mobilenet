@@ -154,10 +154,6 @@ def run():
 
 
 def plot(history):
-    # move history values to cpu
-    for k, v in history.items():
-        history[k] = v.cpu()
-
     rcParams["figure.figsize"] = 15, 16
     plt.subplot(311)
 
