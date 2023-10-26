@@ -179,7 +179,7 @@ def plot(history):
 
     plt.legend()
 
-    now = datetime.now().strftime("%Y%m%d_%H%M%S")
+    now = datetime.now(tz=SEOUL_TZ).strftime("%Y%m%d_%H%M%S")
     plt.savefig(f"./plot_{now}.jpg")
 
 
