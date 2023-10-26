@@ -63,10 +63,10 @@ def train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn):
         end_c = time()
         time_c += (end_c - start_c)
 
-        history["loss_m"].append(loss_m)
-        history["time_m"].append(time_m)
-        history["loss_c"].append(loss_c)
-        history["time_c"].append(time_c)
+        history["loss_m"].append(loss_m.cpu())
+        history["time_m"].append(time_m.cpu())
+        history["loss_c"].append(loss_c.cpu())
+        history["time_c"].append(time_c.cpu())
 
         if batch_idx % 10:
             loss_m_item = loss_m.item()
@@ -113,8 +113,8 @@ def test_loop(mobilenet, mobilenet_cnn, dataloader_test, loss_fn):
           f"--- accuracy_m : {correct_m / num_batches}\n"
           f"--- accuracy_c : {correct_c / num_batches}")
 
-    history["accuracy_m"].append(correct_m / num_batches)
-    history["accuracy_c"].append(correct_c / num_batches)
+    history["accuracy_m"].append((correct_m / num_batches).cpu())
+    history["accuracy_c"].append((correct_c / num_batches).cpu())
     return history
 
 
