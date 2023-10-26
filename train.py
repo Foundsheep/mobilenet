@@ -177,6 +177,8 @@ def plot(history):
     plt.xlabel("iteration")
     plt.title("time comparison")
 
+    plt.legend()
+
     now = datetime.now().strftime("%Y%m%d_%H%M%S")
     plt.savefig(f"./plot_{now}.jpg")
 
