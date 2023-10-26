@@ -63,9 +63,9 @@ def train_loop(mobilenet, mobilenet_cnn, dataloader_train, loss_fn):
         end_c = time()
         time_c += (end_c - start_c)
 
-        history["loss_m"].append(loss_m.item)
+        history["loss_m"].append(loss_m.item())
         history["time_m"].append(time_m)
-        history["loss_c"].append(loss_c.item)
+        history["loss_c"].append(loss_c.item())
         history["time_c"].append(time_c)
 
         if batch_idx % 10:
