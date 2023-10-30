@@ -162,6 +162,7 @@ def plot(history):
     plt.ylabel("loss")
     plt.xlabel("iteration")
     plt.title("loss comparison")
+    plt.legend()
 
     plt.subplot(312)
     plt.plot(history["accuracy_m"], label="accuracy_mobilenet")
@@ -169,14 +170,14 @@ def plot(history):
     plt.ylabel("accuracy")
     plt.xlabel("iteration")
     plt.title("accuracy comparison")
+    plt.legend()
 
     plt.subplot(313)
-    plt.plot(history["time_m"], label="time_mobilenet")
-    plt.plot(history["time_c"], label="time_mobilenet_cnn")
+    plt.plot(history["time_m"][1:], label="time_mobilenet")   # remove the first one, as it tens to be an outlier
+    plt.plot(history["time_c"][1:], label="time_mobilenet_cnn")
     plt.ylabel("seconds")
     plt.xlabel("iteration")
     plt.title("time comparison")
-
     plt.legend()
 
     now = datetime.now(tz=SEOUL_TZ).strftime("%Y%m%d_%H%M%S")
