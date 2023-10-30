@@ -150,10 +150,10 @@ def run():
         total_history["accuracy_c"].extend(history_test["accuracy_c"])
     print("========= END ==============")
 
-    plot(total_history)
+    plot(total_history, len(dataloader_train))
 
 
-def plot(history):
+def plot(history, skip_number):
     rcParams["figure.figsize"] = 15, 16
     plt.subplot(311)
 
@@ -173,8 +173,8 @@ def plot(history):
     plt.legend()
 
     plt.subplot(313)
-    plt.plot(history["time_m"][1:], label="time_mobilenet")   # remove the first one, as it tens to be an outlier
-    plt.plot(history["time_c"][1:], label="time_mobilenet_cnn")
+    plt.plot(history["time_m"][skip_number:], label="time_mobilenet")   # remove the first its, as they tend to be outliers
+    plt.plot(history["time_c"][skip_number:], label="time_mobilenet_cnn")
     plt.ylabel("seconds")
     plt.xlabel("iteration")
     plt.title("time comparison")
